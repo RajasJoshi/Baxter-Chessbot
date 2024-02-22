@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version="1.6">
+    <model name="block">
+        <link name="piece">
+            <inertial>
+                <pose frame=''>0.025 0.025 0.025 0 -0 0</pose>
+                <mass>0.1</mass>
+                <inertia>
+                    <ixx>0.000416</ixx>
+                    <ixy>0</ixy>
+                    <ixz>0</ixz>
+                    <iyy>0.000416</iyy>
+                    <iyz>0</iyz>
+                    <izz>0.000416</izz>
+                </inertia>
+            </inertial>
+            <collision name="collision">
+                <pose frame=''>0.025 0.025 0.025 0 0 0</pose>
+                <geometry>
+                    <box>
+                        <size>0.05 0.05 0.05</size>
+                    </box>
+                </geometry>
+                <surface>
+                    <friction>
+                        <ode>
+                            <mu>0.1</mu>
+                            <mu2>0.1</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <visual name="visual">
+                <pose frame=''>0.025 0.025 0.025 0 0 0</pose>
+                <geometry>
+                    <box>
+                        <size>0.05 0.05 0.05</size>
+                    </box>
+                </geometry>
+                <material>
+                    <script>
+                        <uri>file://media/materials/scripts/gazebo.material</uri>
+                        <name>Gazebo/Red</name>
+                    </script>
+                </material>
+            </visual>
+        </link>
+    </model>
+</sdf>
