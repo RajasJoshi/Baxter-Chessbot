@@ -69,7 +69,22 @@ class PickAndPlaceMoveIt(object):
     def move_to_start(self, start_pose=None):
         rospy.loginfo("Moving the {0} arm to start pose...".format(self._limb_name))
         self.gripper_open()
-        self._approach(start_pose)
+
+        # Get the current pose
+        self.update_pose()
+        current_pose = self._last_known_pose
+
+        # Define the waypoints
+        waypoints = [current_pose, start_pose]
+
+        # Compute the path
+        (plan, fraction) = self._group.compute_cartesian_path(
+            waypoints, 0.01, 0.0  # waypoints to follow  # eef_step  # jump_threshold
+        )
+
+        # Execute the plan
+        self._group.execute(plan)
+
         rospy.sleep(1.0)
         rospy.loginfo("Running. Ctrl-c to quit")
 
