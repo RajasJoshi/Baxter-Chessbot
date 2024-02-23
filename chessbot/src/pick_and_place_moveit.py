@@ -18,12 +18,23 @@ from geometry_msgs.msg import (
 )
 
 
-states = ["INIT", "FIRST", "SECOND", "THIRD", "FOURTH", "FIFTH", "SIXTH"]
+states = [
+    "INIT",
+    "FIRST",
+    "SECOND",
+    "THIRD",
+    "FOURTH",
+    "FIFTH",
+    "SIXTH",
+    "SEVENTH",
+    "EIGHTH",
+]
 current_state_index = 0
 
 
 class PickAndPlaceMoveIt(object):
     def __init__(self, limb, hover_distance=0.15, verbose=True):
+        self._last_known_pose = None
         self._limb_name = limb  # string
         self._hover_distance = hover_distance  # in meters
         self._verbose = verbose  # bool
@@ -39,16 +50,28 @@ class PickAndPlaceMoveIt(object):
         # We will use this to plan and execute motions
         self._group = moveit_commander.MoveGroupCommander(limb + "_arm")
 
-    def move_to_start(self, start_angles=None):
-        rospy.loginfo("Moving the {0} arm to start pose...".format(self._limb_name))
+    def update_pose(self):
+        current_pose = self._limb.endpoint_pose()
+        self._last_known_pose = Pose(
+            position=Point(
+                x=current_pose["position"].x,
+                y=current_pose["position"].y,
+                z=current_pose["position"].z,
+            ),
+            orientation=Quaternion(
+                x=current_pose["orientation"].x,
+                y=current_pose["orientation"].y,
+                z=current_pose["orientation"].z,
+                w=current_pose["orientation"].w,
+            ),
+        )
 
+    def move_to_start(self, start_pose=None):
+        rospy.loginfo("Moving the {0} arm to start pose...".format(self._limb_name))
         self.gripper_open()
-        self._group.set_pose_target(start_angles)
-        plan = self._group.plan()
-        result = self._group.execute(plan)
+        self._approach(start_pose)
         rospy.sleep(1.0)
         rospy.loginfo("Running. Ctrl-c to quit")
-        return result
 
     def _guarded_move_to_joint_position(self, joint_angles):
         if joint_angles:
@@ -69,48 +92,57 @@ class PickAndPlaceMoveIt(object):
         rospy.sleep(1.0)
 
     def _approach(self, pose):
+        self.update_pose()
         approach = copy.deepcopy(pose)
         # approach with a pose the hover-distance above the requested pose
         approach.position.z = approach.position.z + self._hover_distance
 
-        self._group.set_pose_target(approach)
-        plan = self._group.plan()
+        # Get the current pose
+        current_pose = self._last_known_pose
+
+        # Define the waypoints
+        waypoints = [current_pose, approach]
+
+        # Compute the path
+        (plan, fraction) = self._group.compute_cartesian_path(
+            waypoints, 0.01, 0.0  # waypoints to follow  # eef_step  # jump_threshold
+        )
+
+        # Execute the plan
         self._group.execute(plan)
 
     def _retract(self):
-        # retrieve current pose from endpoint
-        current_pose = self._limb.endpoint_pose()
+        self.update_pose()
+        current_pose = self._last_known_pose
         ik_pose = Pose()
-        ik_pose.position.x = current_pose["position"].x
-        ik_pose.position.y = current_pose["position"].y
-        ik_pose.position.z = current_pose["position"].z
-        ik_pose.orientation.x = current_pose["orientation"].x
-        ik_pose.orientation.y = current_pose["orientation"].y
-        ik_pose.orientation.z = current_pose["orientation"].z
-        ik_pose.orientation.w = current_pose["orientation"].w
+        ik_pose.position.x = current_pose.position.x
+        ik_pose.position.y = current_pose.position.y
+        ik_pose.position.z = current_pose.position.z
+        ik_pose.orientation.x = current_pose.orientation.x
+        ik_pose.orientation.y = current_pose.orientation.y
+        ik_pose.orientation.z = current_pose.orientation.z
+        ik_pose.orientation.w = current_pose.orientation.w
 
-        increment = delta = self._hover_distance / 10
-
-        # start with the current pose
-        waypoints = [ik_pose]
-
-        # Create waypoints using a list comprehension
-        waypoints += [
-            self._create_waypoint(waypoints[0], waypoints[0].position.z + increment)
-            for increment in np.arange(delta, self._hover_distance + 0.01, delta)
+        # Increase the number of waypoints for a smoother path
+        waypoints = [ik_pose] + [
+            self._create_waypoint(ik_pose, z)
+            for z in np.linspace(
+                ik_pose.position.z, ik_pose.position.z + self._hover_distance, num=20
+            )
         ]
 
-        (plan, fraction) = self._group.compute_cartesian_path(
-            waypoints, 0.01, 0.0  # waypoints to follow  # eef_step
-        )  # jump_threshold
+        # Compute the path
+        (plan, fraction) = self._group.compute_cartesian_path(waypoints, 0.01, 0.0)
         self._group.execute(plan)
 
     def _servo_to_pose(self, pose):
+        self.update_pose()
+
         pose.position.z += self._hover_distance
         increment = delta = self._hover_distance / 10
 
         # start with the current pose
-        waypoints = [pose]
+        waypoints = [self._last_known_pose]
         wpose = copy.deepcopy(pose)
 
         # Create waypoints using a list comprehension
@@ -206,8 +238,8 @@ def main():
     # NOTE: Gazebo and Rviz has different origins, even though they are connected. For this
     # we need to compensate for this offset which is 0.93 from the ground in gazebo to
     # the actual 0, 0, 0 in Rviz.
-    starting_pose = Pose(
-        position=Point(x=0.55, y=0.3, z=0.0), orientation=overhead_orientation
+    homepose = Pose(
+        position=Point(x=0.7, y=0.150, z=0.35), orientation=overhead_orientation
     )
     pnp = PickAndPlaceMoveIt(limb, hover_distance)
     # Move to the desired starting angles
@@ -217,7 +249,7 @@ def main():
 
         current_state = states[current_state_index]
 
-        pnp.move_to_start(starting_pose)
+        pnp.move_to_start(homepose)
         rospy.loginfo("Moved to start position")
 
         if current_state == "INIT":
@@ -299,6 +331,32 @@ def main():
                 "SIXTH",
                 "P6",
                 "46",
+            ):
+                current_state_index = (current_state_index + 1) % len(states)
+
+        elif current_state == "SEVENTH":
+
+            if handle_state(
+                pnp,
+                tfBuffer,
+                overhead_orientation,
+                pieceposition,
+                "SIXTH",
+                "n1",
+                "32",
+            ):
+                current_state_index = (current_state_index + 1) % len(states)
+
+        elif current_state == "EIGHTH":
+
+            if handle_state(
+                pnp,
+                tfBuffer,
+                overhead_orientation,
+                pieceposition,
+                "SIXTH",
+                "N1",
+                "52",
             ):
                 current_state_index = (current_state_index + 1) % len(states)
 
