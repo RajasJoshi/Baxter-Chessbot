@@ -19,7 +19,7 @@ if __name__ == '__main__':
     srvCall = rospy.ServiceProxy("gazebo/spawn_sdf_model", SpawnModel)
     
     # Table
-    modelPath = rospkg.RosPack().getPath('baxter_sim_examples')+"/models/"
+    modelPath = rospkg.RosPack().get_path('baxter_sim_examples')+"/models/"
     tableXml = ''
     with open(modelPath + "cafe_table/model.sdf", "r") as tableFile:
         tableXml = tableFile.read().replace('\n', '')
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     orient = Quaternion(*tf.transformations.quaternion_from_euler(0, 0, 0))
     boardPose = Pose(Point(0.4, 0.55, 0.78), orient)
     frameDist = 0.025
-    modelPath = rospkg.RosPack().getPath('chessbot')+"/models/"
+    modelPath = rospkg.RosPack().get_path('chessbot')+"/models/"
     
     with open(modelPath + "chessboard/model.sdf", "r") as f:
         boardXml = f.read().replace('\n', '')
@@ -99,9 +99,9 @@ if __name__ == '__main__':
 
                 place_pose = piecePositionMap[str(row)+str(col)] 
                 # Pick chess piece from hard coded position on table
-                pnp.pick(Pose(position=Point(pieceSpawnLoc.position.x, pieceSpawnLoc.position.y , place_pose[2] - 0.015), orientation=overhead_ori))
+                pnp.pick(Pose(position=Point(pieceSpawnLoc.position.x, pieceSpawnLoc.position.y , place_pose[2] - 0.015), orientation=overhead_orientation))
                 # Place the chess piece at the defined position
-                pnp.place(Pose(position=Point(place_pose[0], place_pose[1], place_pose[2] + 0.008), orientation=overhead_ori))
+                pnp.place(Pose(position=Point(place_pose[0], place_pose[1], place_pose[2] + 0.008), orientation=overhead_orientation))
                 # Move to Home Pose
                 pnp.move_to_start(homepose)
 
