@@ -27,7 +27,6 @@ states = [
     "FIFTH",
     "SIXTH",
     "SEVENTH",
-    "EIGHTH",
 ]
 current_state_index = 0
 
@@ -279,8 +278,8 @@ def main():
                 overhead_orientation,
                 pieceposition,
                 "FIRST",
-                "p4",
-                "34",
+                "N1",
+                "52",
             ):
                 current_state_index = (current_state_index + 1) % len(states)
 
@@ -292,8 +291,8 @@ def main():
                 overhead_orientation,
                 pieceposition,
                 "SECOND",
-                "P5",
-                "45",
+                "p5",
+                "35",
             ):
                 current_state_index = (current_state_index + 1) % len(states)
 
@@ -305,8 +304,8 @@ def main():
                 overhead_orientation,
                 pieceposition,
                 "THIRD",
-                "n6",
-                "25",
+                "b2",
+                "41",
             ):
                 current_state_index = (current_state_index + 1) % len(states)
 
@@ -318,8 +317,8 @@ def main():
                 overhead_orientation,
                 pieceposition,
                 "FOURTH",
-                "N6",
-                "55",
+                "n6",
+                "25",
             ):
                 current_state_index = (current_state_index + 1) % len(states)
 
@@ -331,8 +330,8 @@ def main():
                 overhead_orientation,
                 pieceposition,
                 "FIFTH",
-                "p5",
-                "35",
+                "P2",
+                "51",
             ):
                 current_state_index = (current_state_index + 1) % len(states)
 
@@ -344,8 +343,8 @@ def main():
                 overhead_orientation,
                 pieceposition,
                 "SIXTH",
-                "P6",
-                "46",
+                "n6",
+                "56",
             ):
                 current_state_index = (current_state_index + 1) % len(states)
 
@@ -356,22 +355,9 @@ def main():
                 tfBuffer,
                 overhead_orientation,
                 pieceposition,
-                "SIXTH",
-                "n1",
-                "32",
-            ):
-                current_state_index = (current_state_index + 1) % len(states)
-
-        elif current_state == "EIGHTH":
-
-            if handle_state(
-                pnp,
-                tfBuffer,
-                overhead_orientation,
-                pieceposition,
-                "SIXTH",
-                "N1",
-                "52",
+                "SEVENTH",
+                "Q3",
+                "62",
             ):
                 current_state_index = (current_state_index + 1) % len(states)
 
