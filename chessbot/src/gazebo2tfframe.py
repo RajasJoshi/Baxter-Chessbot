@@ -3,6 +3,7 @@ import rospy
 import tf
 from gazebo_msgs.msg import LinkStates
 
+
 class GazeboLinkStates:
     def __init__(self):
         self.pose = None
@@ -38,6 +39,7 @@ class GazeboLinkStates:
                     )
                     rate.sleep()
         rospy.spin()
+
 
 if __name__ == "__main__":
     GazeboLinkStates().run()

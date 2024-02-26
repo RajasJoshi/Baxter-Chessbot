@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     # ChessBoard
     orient = Quaternion(*tf.transformations.quaternion_from_euler(0, 0, 0))
-    boardPose = Pose(Point(0.4, 0.55, 0.78), orient)
+    boardPose = Pose(Point(0.3, 0.55, 0.78), orient)
     frameDist = 0.025
     modelPath = rospkg.RosPack().get_path("chessbot") + "/models/"
 
@@ -61,17 +61,17 @@ if __name__ == "__main__":
         with open(modelPath + each + ".sdf", "r") as f:
             piecesXml[each] = f.read().replace("\n", "")
 
-    # boardSetup = [
-    #     "rnbqkbnr",
-    #     "pppppppp",
-    #     "********",
-    #     "********",
-    #     "********",
-    #     "********",
-    #     "PPPPPPPP",
-    #     "RNBQKBNR",
-    # ]
-    boardSetup = ["r******r", "", "**k*****", "", "", "******K*", "", "R******R"]
+    boardSetup = [
+        "r*b*k*n*",
+        "*p*p*p*p",
+        "********",
+        "********",
+        "********",
+        "********",
+        "P*P*P*P*",
+        "*N*Q*B*R",
+    ]
+    # boardSetup = ["r******r", "", "**k*****", "", "", "******K*", "", "R******R"]
 
     piecePositionMap = dict()
     pieceNames = []
