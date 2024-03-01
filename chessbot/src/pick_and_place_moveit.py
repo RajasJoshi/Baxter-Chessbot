@@ -194,41 +194,54 @@ class PickAndPlaceMoveIt(object):
         self._retract()
 
 
-def handle_state(
-    pnp,
-    tfBuffer,
-    overhead_orientation,
-    pieceposition,
-    state_name,
-    transform_name,
-    position_name,
-):
-    rospy.loginfo("Current state: %s", state_name)
+class StateHandler:
+    def __init__(self, states):
+        self.states = states
+        self.current_state_index = 0
 
-    trans = tfBuffer.lookup_transform("base", transform_name, rospy.Time())
-    block_pose_pick = Pose(
-        position=Point(
-            x=trans.transform.translation.x,
-            y=trans.transform.translation.y,
-            z=trans.transform.translation.z,
-        ),
-        orientation=overhead_orientation,
-    )
-    rospy.loginfo("\nPicking...")
-    pnp.pick(block_pose_pick)
+    def handle_state(self, pnp, tfBuffer, overhead_orientation, pieceposition):
+        current_state = self.states[self.current_state_index]
+        rospy.loginfo("Current state: %s", current_state)
 
-    block_pose_place = Pose(
-        position=Point(
-            x=pieceposition[position_name][0],
-            y=pieceposition[position_name][1],
-            z=trans.transform.translation.z,
-        ),
-        orientation=overhead_orientation,
-    )
-    rospy.loginfo("\nPlacing...")
-    pnp.place(block_pose_place)
+        if current_state == "INIT":
+            self.current_state_index = (self.current_state_index + 1) % len(self.states)
+            return
 
-    return True
+        state_params = {
+            "FIRST": ("N1", "52"),
+            "SECOND": ("p5", "35"),
+            "THIRD": ("b2", "41"),
+            "FOURTH": ("n6", "25"),
+            "FIFTH": ("P2", "51"),
+            "SIXTH": ("n6", "56"),
+            "SEVENTH": ("Q3", "62"),
+        }
+
+        transform_name, position_name = state_params[current_state]
+
+        trans = tfBuffer.lookup_transform("base", transform_name, rospy.Time())
+        block_pose_pick = Pose(
+            position=Point(
+                x=trans.transform.translation.x,
+                y=trans.transform.translation.y,
+                z=trans.transform.translation.z,
+            ),
+            orientation=overhead_orientation,
+        )
+        rospy.loginfo("\nPicking...")
+        pnp.pick(block_pose_pick)
+
+        block_pose_place = Pose(
+            position=Point(
+                x=pieceposition[position_name][0],
+                y=pieceposition[position_name][1],
+                z=trans.transform.translation.z,
+            ),
+            orientation=overhead_orientation,
+        )
+        rospy.loginfo("\nPlacing...")
+        pnp.place(block_pose_place)
+        self.current_state_index = (self.current_state_index + 1) % len(self.states)
 
 
 def main():
@@ -256,110 +269,16 @@ def main():
         position=Point(x=0.7, y=0.150, z=0.35), orientation=overhead_orientation
     )
     pnp = PickAndPlaceMoveIt(limb, hover_distance)
+
     # Move to the desired starting angles
+    state_handler = StateHandler(states)
 
     while not rospy.is_shutdown():
-        global current_state_index
-
-        current_state = states[current_state_index]
 
         pnp.move_to_start(homepose)
         rospy.loginfo("Moved to start position")
 
-        if current_state == "INIT":
-
-            current_state_index = (current_state_index + 1) % len(states)
-
-        elif current_state == "FIRST":
-
-            if handle_state(
-                pnp,
-                tfBuffer,
-                overhead_orientation,
-                pieceposition,
-                "FIRST",
-                "N1",
-                "52",
-            ):
-                current_state_index = (current_state_index + 1) % len(states)
-
-        elif current_state == "SECOND":
-
-            if handle_state(
-                pnp,
-                tfBuffer,
-                overhead_orientation,
-                pieceposition,
-                "SECOND",
-                "p5",
-                "35",
-            ):
-                current_state_index = (current_state_index + 1) % len(states)
-
-        elif current_state == "THIRD":
-
-            if handle_state(
-                pnp,
-                tfBuffer,
-                overhead_orientation,
-                pieceposition,
-                "THIRD",
-                "b2",
-                "41",
-            ):
-                current_state_index = (current_state_index + 1) % len(states)
-
-        elif current_state == "FOURTH":
-
-            if handle_state(
-                pnp,
-                tfBuffer,
-                overhead_orientation,
-                pieceposition,
-                "FOURTH",
-                "n6",
-                "25",
-            ):
-                current_state_index = (current_state_index + 1) % len(states)
-
-        elif current_state == "FIFTH":
-
-            if handle_state(
-                pnp,
-                tfBuffer,
-                overhead_orientation,
-                pieceposition,
-                "FIFTH",
-                "P2",
-                "51",
-            ):
-                current_state_index = (current_state_index + 1) % len(states)
-
-        elif current_state == "SIXTH":
-
-            if handle_state(
-                pnp,
-                tfBuffer,
-                overhead_orientation,
-                pieceposition,
-                "SIXTH",
-                "n6",
-                "56",
-            ):
-                current_state_index = (current_state_index + 1) % len(states)
-
-        elif current_state == "SEVENTH":
-
-            if handle_state(
-                pnp,
-                tfBuffer,
-                overhead_orientation,
-                pieceposition,
-                "SEVENTH",
-                "Q3",
-                "62",
-            ):
-                current_state_index = (current_state_index + 1) % len(states)
+        state_handler.handle_state(pnp, tfBuffer, overhead_orientation, pieceposition)
 
     return 0
 

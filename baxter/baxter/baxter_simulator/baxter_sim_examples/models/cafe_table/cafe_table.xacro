@@ -32,7 +32,7 @@
     </visual>
   </link>
   <joint name="cafe_table_fixed" type="fixed">
-    <origin rpy="0 0 0" xyz="1.0 0 -0.93"/>
+    <origin rpy="0 0 0" xyz="0.78 0.3 -0.93"/>
     <axis xyz="0 0 1"/>
     <parent link="world"/>
     <child link="cafe_table__link"/>
